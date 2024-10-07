@@ -1,6 +1,6 @@
-# Boundary Controller on Azure
+# Boundary Enterprise Controller HVD on Azure VM
 
-Terraform module used by HashiCorp Professional Services to deploy Boundary Controller on Azure. For deploying workers, please see the [Boundary Workers on Azure](https://github.com/hashicorp-services/terraform-azurerm-boundary-worker) module. Prior to deploying in production, the code should be reviewed, potentially tweaked/customized, and tested in a non-production environment.
+Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Boundary Enterprise Controller(s) on Microsoft Azure using Azure Virtual Machines. This module is designed to work with the complimentary [Boundary Enterprise Worker HVD on Azure VM](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-worker-hvd) module.
 
 <!-- ## Boundary Architecture
 
@@ -40,11 +40,13 @@ This diagram shows a Boundary deployment with one controller and two sets of Bou
 - __Boundary TLS certificate__ - file in PEM format, base64-encoded into a string, and stored as a plaintext secret.
 - __Boundary TLS private key__ - file in PEM format, base64-encoded into a string, and stored as a plaintext secret.
 - __Boundary custom CA bundle__ - file in PEM format, base64-encoded into a string, and stored as a plaintext secret.
+
   >📝 Note: see the [Boundary cert rotation docs](./docs/boundary-cert-rotation.md) for instructions on how to base64-encode the certificates with proper formatting.
 
 #### Keys
 
 This module supports creating the necessary Key Vaults, Controller and Worker and associated keys, Root, Recovery, and Worker with the variables, `create_boundary_controller_key_vault`, `create_boundary_worker_key_vault`, `create_boundary_controller_root_key`, `create_boundary_worker_key_vault`, and `create_boundary_worker_key`. If due to security policy KMS keys have to be provisioned outside this module, these variables can be set to `false` and the the key vault name for the controller and worker key vaults, the resource group names, and the key names can be provided with these variables: `boundary_controller_key_vault_rg_name`, `boundary_controller_key_vault_name`, `root_key_name`, `recovery_key_name`, `boundary_worker_key_vault_rg_name`, `boundary_worker_key_vault_name`, and `worker_key_name`.
+
   >📝 Note: The Worker Key should be in a separate Key Vault than the Root and Recovery Keys, as Azure IAM does not allow individual permissions to Keys, only to Key Vaults, and the Worker(s) should never have access to the Root and Recovery Keys.
 
 ### Compute
@@ -57,78 +59,79 @@ One of the following mechanisms for shell access to Boundary EC2 instances:
 
 1. Create/configure/validate the applicable [prerequisites](#prerequisites).
 
-2. Nested within the [examples](./examples/) directory are subdirectories that contain ready-made Terraform configurations of example scenarios for how to call and deploy this module. To get started, choose an example scenario. If you are not sure which example scenario to start with, then we recommend starting with the [default](examples/default) example.
+1. Nested within the [examples](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/examples/) directory are subdirectories that contain ready-made Terraform configurations of example scenarios for how to call and deploy this module. To get started, choose an example scenario. If you are not sure which example scenario to start with, then we recommend starting with the [default](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/examples/default) example.
 
-3. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your root Terraform configuration that will manage your Boundary deployment. If you are not sure where to create this new directory, it is common for us to see users create an `environments/` directory at the root of this repo, and then a subdirectory for each Boundary instance deployment, like so:
+1. Copy all of the Terraform files from your example scenario of choice into a new destination directory to create your root Terraform configuration that will manage your Boundary deployment. If you are not sure where to create this new directory, it is common for us to see users create an `environments/` directory at the root of this repo, and then a subdirectory for each Boundary instance deployment, like so:
 
-```sh
-.
-└── environments
-    ├── production
-    │   ├── backend.tf
-    │   ├── main.tf
-    │   ├── outputs.tf
-    │   ├── terraform.tfvars
-    │   └── variables.tf
-    └── sandbox
-        ├── backend.tf
-        ├── main.tf
-        ├── outputs.tf
-        ├── terraform.tfvars
-        └── variables.tf
-```
+    ```sh
+    .
+    └── environments
+        ├── production
+        │   ├── backend.tf
+        │   ├── main.tf
+        │   ├── outputs.tf
+        │   ├── terraform.tfvars
+        │   └── variables.tf
+        └── sandbox
+            ├── backend.tf
+            ├── main.tf
+            ├── outputs.tf
+            ├── terraform.tfvars
+            └── variables.tf
+    ```
 
-  >📝 Note: in this example, the user will have two separate Boundary deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
+    >📝 Note: in this example, the user will have two separate Boundary deployments; one for their `sandbox` environment, and one for their `production` environment. This is recommended, but not required.
 
-4. (Optional) Uncomment and update the [AzureRM remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your Boundary deployment.
+1. (Optional) Uncomment and update the [AzureRM remote state backend](https://developer.hashicorp.com/terraform/language/settings/backends/azurerm.html) configuration provided in the `backend.tf` file with your own custom values. While this step is highly recommended, it is technically not required to use a remote backend config for your Boundary deployment.
 
-5. Populate your own custom values into the `terraform.tfvars.example` file that was provided, and remove the `.example` file extension such that the file is now named `terraform.tfvars`.
+1. Populate your own custom values into the `terraform.tfvars.example` file that was provided, and remove the `.example` file extension such that the file is now named `terraform.tfvars`.
 
-6. Navigate to the directory of your newly created Terraform configuration for your Boundary Controller deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
+1. Navigate to the directory of your newly created Terraform configuration for your Boundary Controller deployment, and run `terraform init`, `terraform plan`, and `terraform apply`.
 
-7. After the `terraform apply` finishes successfully, you can monitor the install progress by connecting to the VM in your Boundary Controller Virtual Machine Scaleset (VMSS) via SSH and observing the cloud-init (user_data) logs:
+1. After the `terraform apply` finishes successfully, you can monitor the install progress by connecting to the VM in your Boundary Controller Virtual Machine Scaleset (VMSS) via SSH and observing the cloud-init (user_data) logs:
 
-  Higher-level logs:
+    Higher-level logs:
 
-  ```sh
-  tail -f /var/log/boundary-cloud-init.log
-  ```
+    ```sh
+    tail -f /var/log/boundary-cloud-init.log
+    ```
 
-  Lower-level logs:
+    Lower-level logs:
 
-  ```sh
-  journalctl -xu cloud-final -f
-  ```
+    ```sh
+    journalctl -xu cloud-final -f
+    ```
 
-  >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
+    >📝 Note: the `-f` argument is to follow the logs as they append in real-time, and is optional. You may remove the `-f` for a static view.
 
-  The log files should display the following message after the cloud-init (user_data) script finishes successfully:
+    The log files should display the following message after the cloud-init (user_data) script finishes successfully:
 
-  ```sh
-  [INFO] boundary_custom_data script finished successfully!
-  ```
+    ```sh
+    [INFO] boundary_custom_data script finished successfully!
+    ```
 
-8.  Once the cloud-init script finishes successfully, while still connected to the VM via SSH you can check the status of the boundary service:
+1. Once the cloud-init script finishes successfully, while still connected to the VM via SSH you can check the status of the boundary service:
 
-   ```sh
-   sudo systemctl status boundary
-   ```
+    ```sh
+    sudo systemctl status boundary
+    ```
 
-9. After the Boundary Controller is deployed the Boundary system will be partially initialized. To complete the initialization process and setup an initial auth method, username and password, please use the [terraform-boundary-bootstrap-hvd](https://registry.terraform.io/modules/hashicorp/boundary-bootstrap-hvd/boundary/latest) module
+1. After the Boundary Controller is deployed the Boundary system will be partially initialized. To complete the initialization process and setup an initial auth method, username and password, please use the [terraform-boundary-bootstrap-hvd](https://registry.terraform.io/modules/hashicorp/boundary-bootstrap-hvd/boundary/latest) module
 
-10. Use the [terraform-azurerm-boundary-worker-hvd](https://registry.terraform.io/modules/hashicorp/boundary-enterprise-worker-hvd/azurerm/latest) module to deploy ingress, egress, etc workers as needed.
+1. Use the [terraform-azurerm-boundary-worker-hvd](https://registry.terraform.io/modules/hashicorp/boundary-enterprise-worker-hvd/azurerm/latest) module to deploy ingress, egress, etc workers as needed.
 
 ## Docs
 
 Below are links to docs pages related to deployment customizations and day 2 operations of your Boundary Controller instance.
 
-- [Deployment Customizations](./docs/deployment-customizations.md)
-- [Upgrading Boundary version](./docs/boundary-version-upgrades.md)
-- [Rotating Boundary TLS/SSL certificates](./docs/boundary-cert-rotation.md)
-- [Updating/modifying Boundary configuration settings](./docs/boundary-config-settings.md)
-- [Deploying in Azure GovCloud](./docs/govcloud-deployment.md)
-- [Authenticate to Boundary Cluster with Boundary CLI](./docs/boundary-cli-auth.md)
+- [Deployment Customizations](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/deployment-customizations.md)
+- [Upgrading Boundary version](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/boundary-version-upgrades.md)
+- [Rotating Boundary TLS/SSL certificates](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/boundary-cert-rotation.md)
+- [Updating/modifying Boundary configuration settings](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/boundary-config-settings.md)
+- [Deploying in Azure GovCloud](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/govcloud-deployment.md)
+- [Authenticate to Boundary Cluster with Boundary CLI](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/main/docs/boundary-cli-auth.md)
 
+<!-- BEGIN_TF_DOCS -->
 ## Module support
 
 This open source software is maintained by the HashiCorp Technical Field Organization, independently of our enterprise products. While our Support Engineering team provides dedicated support for our enterprise offerings, this open source software is not included.
@@ -138,7 +141,6 @@ This open source software is maintained by the HashiCorp Technical Field Organiz
 
 Please note that there is no official Service Level Agreement (SLA) for support of this software as a HashiCorp customer. This software falls under the definition of Community Software/Versions in your Agreement. We appreciate your understanding and collaboration in improving our open source projects.
 
-<!-- BEGIN_TF_DOCS -->
 ## Requirements
 
 | Name | Version |
@@ -207,22 +209,6 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_boundary_database_password_key_vault_secret_name"></a> [boundary\_database\_password\_key\_vault\_secret\_name](#input\_boundary\_database\_password\_key\_vault\_secret\_name) | Name of the secret in the Key Vault that contains the boundary database password. | `string` | n/a | yes |
-| <a name="input_boundary_fqdn"></a> [boundary\_fqdn](#input\_boundary\_fqdn) | Fully qualified domain name of boundary instance. This name should resolve to the load balancer IP address and will be what clients use to access boundary. | `string` | n/a | yes |
-| <a name="input_boundary_license_key_vault_secret_id"></a> [boundary\_license\_key\_vault\_secret\_id](#input\_boundary\_license\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary license. | `string` | n/a | yes |
-| <a name="input_boundary_tls_ca_bundle_key_vault_secret_id"></a> [boundary\_tls\_ca\_bundle\_key\_vault\_secret\_id](#input\_boundary\_tls\_ca\_bundle\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS custom CA bundle. | `string` | n/a | yes |
-| <a name="input_boundary_tls_cert_key_vault_secret_id"></a> [boundary\_tls\_cert\_key\_vault\_secret\_id](#input\_boundary\_tls\_cert\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS certificate. | `string` | n/a | yes |
-| <a name="input_boundary_tls_privkey_key_vault_secret_id"></a> [boundary\_tls\_privkey\_key\_vault\_secret\_id](#input\_boundary\_tls\_privkey\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS private key. | `string` | n/a | yes |
-| <a name="input_cluster_lb_private_ip"></a> [cluster\_lb\_private\_ip](#input\_cluster\_lb\_private\_ip) | Private IP address for internal Azure Load Balancer. | `string` | n/a | yes |
-| <a name="input_controller_subnet_id"></a> [controller\_subnet\_id](#input\_controller\_subnet\_id) | Subnet ID for controller VMs. | `string` | n/a | yes |
-| <a name="input_db_subnet_id"></a> [db\_subnet\_id](#input\_db\_subnet\_id) | Subnet ID for PostgreSQL database. | `string` | n/a | yes |
-| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix for uniquely naming Azure resources. | `string` | n/a | yes |
-| <a name="input_location"></a> [location](#input\_location) | Azure region for this boundary deployment. | `string` | n/a | yes |
-| <a name="input_prereqs_key_vault_id"></a> [prereqs\_key\_vault\_id](#input\_prereqs\_key\_vault\_id) | ID of the 'prereqs' Key Vault to use for prereqs boundary deployment. | `string` | n/a | yes |
-| <a name="input_prereqs_key_vault_name"></a> [prereqs\_key\_vault\_name](#input\_prereqs\_key\_vault\_name) | Name of the 'prereqs' Key Vault to use for prereqs boundary deployment. | `string` | n/a | yes |
-| <a name="input_prereqs_key_vault_rg_name"></a> [prereqs\_key\_vault\_rg\_name](#input\_prereqs\_key\_vault\_rg\_name) | Name of the Resource Group where the 'prereqs' Key Vault resides. | `string` | n/a | yes |
-| <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | VNet ID where boundary resources will reside. | `string` | n/a | yes |
-| <a name="input_worker_subnet_id"></a> [worker\_subnet\_id](#input\_worker\_subnet\_id) | Subnet ID for worker VMs. | `string` | n/a | yes |
 | <a name="input_additional_package_names"></a> [additional\_package\_names](#input\_additional\_package\_names) | List of additional repository package names to install | `set(string)` | `[]` | no |
 | <a name="input_api_lb_is_internal"></a> [api\_lb\_is\_internal](#input\_api\_lb\_is\_internal) | Boolean to create an internal or external Azure Load Balancer for boundary. | `bool` | `false` | no |
 | <a name="input_api_lb_private_ip"></a> [api\_lb\_private\_ip](#input\_api\_lb\_private\_ip) | Private IP address for internal Azure Load Balancer. Only valid when `lb_is_internal` is `true`. | `string` | `null` | no |
@@ -232,13 +218,21 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_boundary_controller_key_vault_rg_name"></a> [boundary\_controller\_key\_vault\_rg\_name](#input\_boundary\_controller\_key\_vault\_rg\_name) | Name of the existing Resource Group containing the Azure Key Vault to use for Boundary Controller keys. | `string` | `null` | no |
 | <a name="input_boundary_database_name"></a> [boundary\_database\_name](#input\_boundary\_database\_name) | PostgreSQL database name for boundary. | `string` | `"boundary"` | no |
 | <a name="input_boundary_database_paramaters"></a> [boundary\_database\_paramaters](#input\_boundary\_database\_paramaters) | PostgreSQL server parameters for the connection URI. Used to configure the PostgreSQL connection. | `string` | `"sslmode=require"` | no |
+| <a name="input_boundary_database_password_key_vault_secret_name"></a> [boundary\_database\_password\_key\_vault\_secret\_name](#input\_boundary\_database\_password\_key\_vault\_secret\_name) | Name of the secret in the Key Vault that contains the boundary database password. | `string` | n/a | yes |
+| <a name="input_boundary_fqdn"></a> [boundary\_fqdn](#input\_boundary\_fqdn) | Fully qualified domain name of boundary instance. This name should resolve to the load balancer IP address and will be what clients use to access boundary. | `string` | n/a | yes |
+| <a name="input_boundary_license_key_vault_secret_id"></a> [boundary\_license\_key\_vault\_secret\_id](#input\_boundary\_license\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary license. | `string` | n/a | yes |
 | <a name="input_boundary_license_reporting_opt_out"></a> [boundary\_license\_reporting\_opt\_out](#input\_boundary\_license\_reporting\_opt\_out) | Boolean to opt out of license reporting. | `bool` | `false` | no |
+| <a name="input_boundary_tls_ca_bundle_key_vault_secret_id"></a> [boundary\_tls\_ca\_bundle\_key\_vault\_secret\_id](#input\_boundary\_tls\_ca\_bundle\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS custom CA bundle. | `string` | n/a | yes |
+| <a name="input_boundary_tls_cert_key_vault_secret_id"></a> [boundary\_tls\_cert\_key\_vault\_secret\_id](#input\_boundary\_tls\_cert\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS certificate. | `string` | n/a | yes |
 | <a name="input_boundary_tls_disable"></a> [boundary\_tls\_disable](#input\_boundary\_tls\_disable) | Boolean to disable TLS for boundary. | `bool` | `false` | no |
+| <a name="input_boundary_tls_privkey_key_vault_secret_id"></a> [boundary\_tls\_privkey\_key\_vault\_secret\_id](#input\_boundary\_tls\_privkey\_key\_vault\_secret\_id) | ID of Key Vault secret containing boundary TLS private key. | `string` | n/a | yes |
 | <a name="input_boundary_version"></a> [boundary\_version](#input\_boundary\_version) | Version of Boundary to install. | `string` | `"0.17.1+ent"` | no |
 | <a name="input_boundary_worker_key_vault_name"></a> [boundary\_worker\_key\_vault\_name](#input\_boundary\_worker\_key\_vault\_name) | Name of the existing Azure Key Vault to use for Boundary Worker keys. | `string` | `null` | no |
 | <a name="input_boundary_worker_key_vault_rg_name"></a> [boundary\_worker\_key\_vault\_rg\_name](#input\_boundary\_worker\_key\_vault\_rg\_name) | Name of the existing Resource Group containing the Azure Key Vault to use for Boundary Worker keys. | `string` | `null` | no |
+| <a name="input_cluster_lb_private_ip"></a> [cluster\_lb\_private\_ip](#input\_cluster\_lb\_private\_ip) | Private IP address for internal Azure Load Balancer. | `string` | n/a | yes |
 | <a name="input_cluster_lb_subnet_id"></a> [cluster\_lb\_subnet\_id](#input\_cluster\_lb\_subnet\_id) | Subnet ID for Boundary 1ster load balancer. | `string` | `null` | no |
 | <a name="input_common_tags"></a> [common\_tags](#input\_common\_tags) | Map of common tags for taggable Azure resources. | `map(string)` | `{}` | no |
+| <a name="input_controller_subnet_id"></a> [controller\_subnet\_id](#input\_controller\_subnet\_id) | Subnet ID for controller VMs. | `string` | n/a | yes |
 | <a name="input_create_boundary_controller_key_vault"></a> [create\_boundary\_controller\_key\_vault](#input\_create\_boundary\_controller\_key\_vault) | Boolean to create a Key Vault for Boundary Controller. | `bool` | `true` | no |
 | <a name="input_create_boundary_controller_recovery_key"></a> [create\_boundary\_controller\_recovery\_key](#input\_create\_boundary\_controller\_recovery\_key) | Boolean to create a recovery key in the Boundary Controller Key Vault. | `bool` | `true` | no |
 | <a name="input_create_boundary_controller_root_key"></a> [create\_boundary\_controller\_root\_key](#input\_create\_boundary\_controller\_root\_key) | Boolean to create a root key in the Boundary Controller Key Vault. | `bool` | `true` | no |
@@ -248,8 +242,11 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_create_boundary_worker_key_vault"></a> [create\_boundary\_worker\_key\_vault](#input\_create\_boundary\_worker\_key\_vault) | Boolean to create a Key Vault for Boundary Worker. | `bool` | `true` | no |
 | <a name="input_create_postgres_private_endpoint"></a> [create\_postgres\_private\_endpoint](#input\_create\_postgres\_private\_endpoint) | Boolean to create a private endpoint and private DNS zone for PostgreSQL Flexible Server. | `bool` | `true` | no |
 | <a name="input_create_resource_group"></a> [create\_resource\_group](#input\_create\_resource\_group) | Boolean to create a new Resource Group for this boundary deployment. | `bool` | `true` | no |
+| <a name="input_db_subnet_id"></a> [db\_subnet\_id](#input\_db\_subnet\_id) | Subnet ID for PostgreSQL database. | `string` | n/a | yes |
+| <a name="input_friendly_name_prefix"></a> [friendly\_name\_prefix](#input\_friendly\_name\_prefix) | Friendly name prefix for uniquely naming Azure resources. | `string` | n/a | yes |
 | <a name="input_is_govcloud_region"></a> [is\_govcloud\_region](#input\_is\_govcloud\_region) | Boolean indicating whether this boundary deployment is in an Azure Government Cloud region. | `bool` | `false` | no |
 | <a name="input_key_vault_cidr_allow_list"></a> [key\_vault\_cidr\_allow\_list](#input\_key\_vault\_cidr\_allow\_list) | List of CIDR blocks to allow access to the Key Vault. This should be the public IP address of the machine running the Terraform deployment. | `list(string)` | `[]` | no |
+| <a name="input_location"></a> [location](#input\_location) | Azure region for this boundary deployment. | `string` | n/a | yes |
 | <a name="input_postgres_administrator_login"></a> [postgres\_administrator\_login](#input\_postgres\_administrator\_login) | Username for administrator login of PostreSQL database. | `string` | `"boundary"` | no |
 | <a name="input_postgres_backup_retention_days"></a> [postgres\_backup\_retention\_days](#input\_postgres\_backup\_retention\_days) | Number of days to retain backups of PostgreSQL Flexible Server. | `number` | `35` | no |
 | <a name="input_postgres_cmk_key_vault_id"></a> [postgres\_cmk\_key\_vault\_id](#input\_postgres\_cmk\_key\_vault\_id) | ID of the Key Vault containing the customer-managed key (CMK) for encrypting the PostgreSQL Flexible Server database. | `string` | `null` | no |
@@ -266,6 +263,9 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_postgres_source_server_id"></a> [postgres\_source\_server\_id](#input\_postgres\_source\_server\_id) | ID of the source PostgreSQL Flexible Server to replicate from. Only valid when `is_secondary_region` is `true` and `postgres_create_mode` is `Replica`. | `string` | `null` | no |
 | <a name="input_postgres_storage_mb"></a> [postgres\_storage\_mb](#input\_postgres\_storage\_mb) | Storage capacity of PostgreSQL Flexible Server (unit is megabytes). | `number` | `65536` | no |
 | <a name="input_postgres_version"></a> [postgres\_version](#input\_postgres\_version) | PostgreSQL database version. | `number` | `16` | no |
+| <a name="input_prereqs_key_vault_id"></a> [prereqs\_key\_vault\_id](#input\_prereqs\_key\_vault\_id) | ID of the 'prereqs' Key Vault to use for prereqs boundary deployment. | `string` | n/a | yes |
+| <a name="input_prereqs_key_vault_name"></a> [prereqs\_key\_vault\_name](#input\_prereqs\_key\_vault\_name) | Name of the 'prereqs' Key Vault to use for prereqs boundary deployment. | `string` | n/a | yes |
+| <a name="input_prereqs_key_vault_rg_name"></a> [prereqs\_key\_vault\_rg\_name](#input\_prereqs\_key\_vault\_rg\_name) | Name of the Resource Group where the 'prereqs' Key Vault resides. | `string` | n/a | yes |
 | <a name="input_private_dns_zone_name"></a> [private\_dns\_zone\_name](#input\_private\_dns\_zone\_name) | Name of existing private Azure DNS zone to create DNS record in. Required when `create_boundary_private_dns_record` is `true`. | `string` | `null` | no |
 | <a name="input_private_dns_zone_rg"></a> [private\_dns\_zone\_rg](#input\_private\_dns\_zone\_rg) | Name of Resource Group where `private_dns_zone_name` resides. Required when `create_boundary_private_dns_record` is `true`. | `string` | `null` | no |
 | <a name="input_public_dns_zone_name"></a> [public\_dns\_zone\_name](#input\_public\_dns\_zone\_name) | Name of existing public Azure DNS zone to create DNS record in. Required when `create_boundary_public_dns_record` is `true`. | `string` | `null` | no |
@@ -287,7 +287,9 @@ Please note that there is no official Service Level Agreement (SLA) for support 
 | <a name="input_vm_ssh_public_key"></a> [vm\_ssh\_public\_key](#input\_vm\_ssh\_public\_key) | SSH public key for VMs in VMSS. | `string` | `null` | no |
 | <a name="input_vmss_availability_zones"></a> [vmss\_availability\_zones](#input\_vmss\_availability\_zones) | List of Azure Availability Zones to spread the VMSS VM resources across. | `set(string)` | <pre>[<br/>  "1",<br/>  "2",<br/>  "3"<br/>]</pre> | no |
 | <a name="input_vmss_vm_count"></a> [vmss\_vm\_count](#input\_vmss\_vm\_count) | Number of VM instances in the VMSS. | `number` | `1` | no |
+| <a name="input_vnet_id"></a> [vnet\_id](#input\_vnet\_id) | VNet ID where boundary resources will reside. | `string` | n/a | yes |
 | <a name="input_worker_key_name"></a> [worker\_key\_name](#input\_worker\_key\_name) | Name of the existing worker key in the Boundary Worker Key Vault. | `string` | `null` | no |
+| <a name="input_worker_subnet_id"></a> [worker\_subnet\_id](#input\_worker\_subnet\_id) | Subnet ID for worker VMs. | `string` | n/a | yes |
 
 ## Outputs
 
