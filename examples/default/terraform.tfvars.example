@@ -1,0 +1,47 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
+# --- Common --- #
+friendly_name_prefix = "<example>" #This should be unique across all deployments
+location             = "<eastus>"
+common_tags = {
+  App         = "<boundary-controller>"
+  Environment = "<test>"
+  Owner       = "<YourName>"
+}
+
+# --- Prereqs --- #
+prereqs_key_vault_name                           = "<boundary-preqs-kv">
+prereqs_key_vault_rg_name                        = "<boundary-prereqs-rg">
+prereqs_key_vault_id                             = "<boundary-key_vault-id">
+boundary_license_key_vault_secret_id             = "<boundary-license-key_vault-secret-id>">
+boundary_tls_cert_key_vault_secret_id            = "<boundary-tls-cert-key_vault-secret-id>"
+boundary_tls_privkey_key_vault_secret_id         = "<boundary-tls-privkey-key_vault-secret-id>"
+boundary_tls_ca_bundle_key_vault_secret_id       = "<boundary-tls-ca-bundle-key_vault-secret-id>"
+boundary_database_password_key_vault_secret_name = "<boundary-database-password-name">
+
+# ---Boundary configuration settings --- #
+boundary_fqdn = "<boundary.azure.company.com>"
+
+# --- Networking --- #
+vnet_id               = "<vnet-id>"
+api_lb_subnet_id      = "<lb-subnet-id>"
+api_lb_is_internal    = <false>
+cluster_lb_subnet_id  = "<lb-subnet-id>"
+cluster_lb_private_ip = "<10.0.20.0>"
+db_subnet_id          = "<db-subnet-id>"
+controller_subnet_id  = "<controller-subnet-id>"
+worker_subnet_id      = "<worker-subnet-id>"
+
+# --- DNS (optional) --- #
+create_boundary_public_dns_record = <true>
+public_dns_zone_name              = "<azure.company.com>"
+public_dns_zone_rg                = "<boundary-prereqs-rg>"
+
+# --- Compute --- #
+vmss_vm_count              = <1>
+vm_ssh_public_key          = "<iamafaketsshpublickey>"
+vm_enable_boot_diagnostics = true
+
+# --- Key Vault --- #
+key_vault_cidr_allow_list = <["<1.2.3.4/32>"]
