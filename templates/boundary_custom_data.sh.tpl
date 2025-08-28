@@ -150,6 +150,47 @@ function directory_create {
   log "INFO" "Done creating necessary directories."
 }
 
+function checksum_verify {
+  local OS_ARCH="$1"
+
+  # https://www.hashicorp.com/en/trust/security
+  # checksum_verify downloads the $$PRODUCT binary and verifies its integrity
+  log "INFO" "Verifying the integrity of the $${PRODUCT} binary."
+  export GNUPGHOME=./.gnupg
+  log "INFO" "Importing HashiCorp GPG key."
+  sudo curl -s https://www.hashicorp.com/.well-known/pgp-key.txt | gpg --import
+
+	log "INFO" "Downloading $${PRODUCT} binary"
+  sudo curl -Os https://releases.hashicorp.com/"$${PRODUCT}"/"$${VERSION}"/"$${PRODUCT}"_"$${VERSION}"_"$${OS_ARCH}".zip
+	log "INFO" "Downloading $${PRODUCT}  Enterprise binary checksum files"
+  sudo curl -Os https://releases.hashicorp.com/"$${PRODUCT}"/"$${VERSION}"/"$${PRODUCT}"_"$${VERSION}"_SHA256SUMS
+	log "INFO" "Downloading $${PRODUCT}  Enterprise binary checksum signature file"
+  sudo curl -Os https://releases.hashicorp.com/"$${PRODUCT}"/"$${VERSION}"/"$${PRODUCT}"_"$${VERSION}"_SHA256SUMS.sig
+  log "INFO" "Verifying the signature file is untampered."
+  gpg --verify "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS.sig "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS
+	if [[ $? -ne 0 ]]; then
+		log "ERROR" "Gpg verification failed for SHA256SUMS."
+		exit_script 1
+	fi
+  if [ -x "$(command -v sha256sum)" ]; then
+		log "INFO" "Using sha256sum to verify the checksum of the $${PRODUCT} binary."
+		sha256sum -c "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS --ignore-missing
+	else
+		log "INFO" "Using shasum to verify the checksum of the $${PRODUCT} binary."
+		shasum -a 256 -c "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS --ignore-missing
+	fi
+	if [[ $? -ne 0 ]]; then
+		log "ERROR" "Checksum verification failed for the $${PRODUCT} binary."
+		exit_script 1
+	fi
+
+	log "INFO" "Checksum verification passed for the $${PRODUCT} binary."
+
+	log "INFO" "Removing the downloaded files to clean up"
+	sudo rm -f "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS "$${PRODUCT}"_"$${VERSION}"_SHA256SUMS.sig
+
+}
+
 # install_boundary_binary downloads the Boundary binary and puts it in dedicated bin directory
 function install_boundary_binary {
   log "INFO" "Installing Boundary binary to: $BOUNDARY_DIR_BIN..."
