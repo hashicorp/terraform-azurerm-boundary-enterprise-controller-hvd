@@ -81,37 +81,14 @@ function install_prereqs {
     apt-get update -y
     apt-get install -y $REQUIRED_PACKAGES $ADDITIONAL_PACKAGES
   elif [[ "$OS_DISTRO" == "rhel" ]]; then
-    yum install -y $REQUIRED_PACKAGES $ADDITIONAL_PACKAGES
+    dnf install -y $REQUIRED_PACKAGES $ADDITIONAL_PACKAGES
   else
     log "ERROR" "Unsupported OS distro '$OS_DISTRO'. Exiting."
     exit_script 1
   fi
 }
 
-# function install_azcli() {
-#   local OS_DISTRO="$1"
 
-#   if [[ -n "$(command -v az)" ]]; then
-#     log "INFO" "Detected 'az' (azure-cli) is already installed. Skipping."
-#   else
-#     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
-#       log "INFO" "Installing Azure CLI for Ubuntu."
-#       curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-#     elif [[ "$OS_DISTRO" == "centos" ]] || [[ "$OS_DISTRO" == "rhel" ]]; then
-#       log "INFO" "Installing Azure CLI for CentOS/RHEL."
-#       rpm --import https://packages.microsoft.com/keys/microsoft.asc
-#       cat >/etc/yum.repos.d/azure-cli.repo <<EOF
-# [azure-cli]
-# name=Azure CLI
-# baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-# enabled=1
-# gpgcheck=1
-# gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-# EOF
-#       dnf install -y azure-cli
-#     fi
-#   fi
-# }
 function install_azcli() {
   local OS_DISTRO="$1"
   local OS_MAJOR_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d"\"" -f2 | cut -d"." -f1)
@@ -125,8 +102,7 @@ function install_azcli() {
       curl -sL https://aka.ms/InstallAzureCLIDeb | bash
     elif [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
       log "INFO" "Installing Azure CLI for RHEL $OS_MAJOR_VERSION."
-      rpm --import https://packages.microsoft.com/keys/microsoft.asc
-      dnf update -y
+			rpm --import https://packages.microsoft.com/keys/microsoft.asc
       dnf install -y https://packages.microsoft.com/config/rhel/$OS_MAJOR_VERSION/packages-microsoft-prod.rpm
       dnf install -y azure-cli
     fi
