@@ -191,20 +191,22 @@ function checksum_verify {
 
 }
 
-# install_boundary_binary downloads the Boundary binary and puts it in dedicated bin directory
 function install_boundary_binary {
-  log "INFO" "Installing Boundary binary to: $BOUNDARY_DIR_BIN..."
+  local OS_ARCH="$1"
 
-  # Download the Boundary binary to the dedicated bin directory
-  sudo curl -so $BOUNDARY_DIR_BIN/boundary.zip $BOUNDARY_INSTALL_URL
+  log "INFO" "Deploying Boundary binary to $BOUNDARY_DIR_BIN unzip and set permissions"
+  sudo unzip "$${PRODUCT}"_"$${BOUNDARY_VERSION}"_"$${OS_ARCH}".zip  boundary -d $BOUNDARY_DIR_BIN
+  sudo unzip "$${PRODUCT}"_"$${BOUNDARY_VERSION}"_"$${OS_ARCH}".zip -x boundary -d $BOUNDARY_DIR_LICENSE
+  sudo rm -f "$${PRODUCT}"_"$${BOUNDARY_VERSION}"_"$${OS_ARCH}".zip
 
-  # Unzip the Boundary binary
-  sudo unzip $BOUNDARY_DIR_BIN/boundary.zip boundary -d $BOUNDARY_DIR_BIN
-  sudo unzip $BOUNDARY_DIR_BIN/boundary.zip -x boundary -d $BOUNDARY_DIR_LICENSE
+	log "INFO" "Deploying Boundary $BOUNDARY_DIR_BIN set permissions"
+  sudo chmod 0755 $BOUNDARY_DIR_BIN/boundary
+  sudo chown $BOUNDARY_USER:$BOUNDARY_GROUP $BOUNDARY_DIR_BIN/boundary
 
-  sudo rm $BOUNDARY_DIR_BIN/boundary.zip
+  log "INFO" "Deploying Boundary create symlink "
+  sudo ln -sf $BOUNDARY_DIR_BIN/boundary /usr/local/bin/boundary
 
-  log "INFO" "Done installing Boundary binary."
+  log "INFO" "Boundary binary installed successfully at $BOUNDARY_DIR_BIN/boundary"
 }
 
 function retrieve_license_from_kv() {
