@@ -13,7 +13,9 @@ BOUNDARY_DIR_LOGS="/var/log/boundary"
 BOUNDARY_DIR_BIN="${boundary_dir_bin}"
 BOUNDARY_USER="boundary"
 BOUNDARY_GROUP="boundary"
-BOUNDARY_INSTALL_URL="${boundary_install_url}"
+PRODUCT="boundary"
+BOUNDARY_VERSION="${boundary_version}"
+VERSION=$BOUNDARY_VERSION
 REQUIRED_PACKAGES="jq unzip"
 ADDITIONAL_PACKAGES="${additional_package_names}"
 
@@ -176,7 +178,7 @@ function generate_boundary_config {
   cat >$BOUNDARY_CONFIG_PATH <<EOF
 disable_mlock = true
 
-telemetry { 
+telemetry {
   prometheus_retention_time = "24h"
   disable_hostname          = true
 }
@@ -188,7 +190,7 @@ controller {
   database {
     url = "postgresql://${boundary_database_user}:${boundary_database_password}@${boundary_database_host}/${boundary_database_name}?sslmode=require"
   }
-  
+
   license = "file:///$BOUNDARY_LICENSE_PATH"
 }
 
@@ -214,7 +216,7 @@ listener "tcp" {
   address            = "0.0.0.0:9203"
   purpose            = "ops"
   tls_disable        = ${boundary_tls_disable}
-  tls_cert_file      = "$BOUNDARY_DIR_TLS/cert.pem" 
+  tls_cert_file      = "$BOUNDARY_DIR_TLS/cert.pem"
   tls_key_file       = "$BOUNDARY_DIR_TLS/key.pem"
   tls_client_ca_file = "$BOUNDARY_DIR_TLS/bundle.pem"
 %{ if boundary_tls_ca_bundle_key_vault_secret_id != "NONE" ~}
