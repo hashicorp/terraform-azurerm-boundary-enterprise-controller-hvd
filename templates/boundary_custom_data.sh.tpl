@@ -88,26 +88,46 @@ function install_prereqs {
   fi
 }
 
+# function install_azcli() {
+#   local OS_DISTRO="$1"
+
+#   if [[ -n "$(command -v az)" ]]; then
+#     log "INFO" "Detected 'az' (azure-cli) is already installed. Skipping."
+#   else
+#     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
+#       log "INFO" "Installing Azure CLI for Ubuntu."
+#       curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+#     elif [[ "$OS_DISTRO" == "centos" ]] || [[ "$OS_DISTRO" == "rhel" ]]; then
+#       log "INFO" "Installing Azure CLI for CentOS/RHEL."
+#       rpm --import https://packages.microsoft.com/keys/microsoft.asc
+#       cat >/etc/yum.repos.d/azure-cli.repo <<EOF
+# [azure-cli]
+# name=Azure CLI
+# baseurl=https://packages.microsoft.com/yumrepos/azure-cli
+# enabled=1
+# gpgcheck=1
+# gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+# EOF
+#       dnf install -y azure-cli
+#     fi
+#   fi
+# }
 function install_azcli() {
   local OS_DISTRO="$1"
+  local OS_MAJOR_VERSION=$(grep "^VERSION_ID=" /etc/os-release | cut -d"\"" -f2 | cut -d"." -f1)
+	log "INFO" "Detected OS major version: $OS_MAJOR_VERSION"
 
-  if [[ -n "$(command -v az)" ]]; then
+  if command -v az > /dev/null; then
     log "INFO" "Detected 'az' (azure-cli) is already installed. Skipping."
   else
     if [[ "$OS_DISTRO" == "ubuntu" ]]; then
       log "INFO" "Installing Azure CLI for Ubuntu."
       curl -sL https://aka.ms/InstallAzureCLIDeb | bash
-    elif [[ "$OS_DISTRO" == "centos" ]] || [[ "$OS_DISTRO" == "rhel" ]]; then
-      log "INFO" "Installing Azure CLI for CentOS/RHEL."
+    elif [[ "$OS_DISTRO" == "rhel" || "$OS_DISTRO" == "centos" ]]; then
+      log "INFO" "Installing Azure CLI for RHEL $OS_MAJOR_VERSION."
       rpm --import https://packages.microsoft.com/keys/microsoft.asc
-      cat >/etc/yum.repos.d/azure-cli.repo <<EOF
-[azure-cli]
-name=Azure CLI
-baseurl=https://packages.microsoft.com/yumrepos/azure-cli
-enabled=1
-gpgcheck=1
-gpgkey=https://packages.microsoft.com/keys/microsoft.asc
-EOF
+      dnf update -y
+      dnf install -y https://packages.microsoft.com/config/rhel/$OS_MAJOR_VERSION/packages-microsoft-prod.rpm
       dnf install -y azure-cli
     fi
   fi
