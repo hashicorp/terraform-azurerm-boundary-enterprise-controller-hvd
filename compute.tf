@@ -5,6 +5,7 @@
 # Custom Data (cloud-init) arguments
 #------------------------------------------------------------------------------
 locals {
+  custom_startup_script_template = var.custom_startup_script_template != null ? "${path.cwd}/templates/${var.custom_startup_script_template}" : "${path.module}/templates/boundary_custom_data.sh.tpl"
   custom_data_args = {
     # used to set azure-cli context to AzureUSGovernment
     is_govcloud_region = var.is_govcloud_region
@@ -62,7 +63,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "boundary" {
   zone_balance        = true
   zones               = var.vmss_availability_zones
   health_probe_id     = azurerm_lb_probe.boundary_api.id
-  custom_data         = base64encode(templatefile("${path.module}/templates/boundary_custom_data.sh.tpl", local.custom_data_args))
+  custom_data         = base64encode(templatefile("${local.custom_startup_script_template}", local.custom_data_args))
 
   scale_in {
     rule = "OldestVM"
