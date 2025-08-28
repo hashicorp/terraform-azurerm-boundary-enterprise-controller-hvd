@@ -20,11 +20,11 @@ locals {
     additional_package_names                   = join(" ", var.additional_package_names)
 
     # Boundary settings
-    boundary_version    = var.boundary_version
-    systemd_dir         = "/etc/systemd/system",
-    boundary_dir_bin    = "/usr/bin",
-    boundary_dir_config = "/etc/boundary.d",
-    boundary_dir_home   = "/opt/boundary",
+    boundary_version     = var.boundary_version
+    systemd_dir          = "/etc/systemd/system",
+    boundary_dir_bin     = "/usr/bin",
+    boundary_dir_config  = "/etc/boundary.d",
+    boundary_dir_home    = "/opt/boundary",
     boundary_tls_disable = var.boundary_tls_disable
 
     # Database settings

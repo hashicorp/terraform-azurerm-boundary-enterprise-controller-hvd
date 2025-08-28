@@ -27,6 +27,29 @@ function log {
 
   echo "$log_entry" | tee -a "$LOGFILE"
 }
+function detect_architecture {
+  local ARCHITECTURE=""
+  local OS_ARCH_DETECTED=$(uname -m)
+
+  case "$OS_ARCH_DETECTED" in
+    "x86_64"*)
+      ARCHITECTURE="linux_amd64"
+      ;;
+    "aarch64"*)
+      ARCHITECTURE="linux_arm64"
+      ;;
+		"arm"*)
+      ARCHITECTURE="linux_arm"
+			;;
+    *)
+      log "ERROR" "Unsupported architecture detected: '$OS_ARCH_DETECTED'. "
+		  exit_script 1
+			;;
+  esac
+
+  echo "$ARCHITECTURE"
+
+}
 
 function detect_os_distro {
   local OS_DISTRO_NAME=$(grep "^NAME=" /etc/os-release | cut -d"\"" -f2)
@@ -328,14 +351,22 @@ function exit_script {
 function main {
   log "INFO" "Beginning Boundary custom_data script."
 
+  OS_ARCH=$(detect_architecture)
+  log "INFO" "Detected system architecture is '$OS_ARCH'."
+
   OS_DISTRO=$(detect_os_distro)
   log "INFO" "Detected Linux OS distro is '$OS_DISTRO'."
+
   scrape_vm_info
   install_prereqs "$OS_DISTRO"
   install_azcli "$OS_DISTRO"
   user_group_create
   directory_create
-  install_boundary_binary
+
+  checksum_verify $OS_ARCH
+  log "INFO" "Checksum verification completed for $${PRODUCT} binary."
+
+  install_boundary_binary $OS_ARCH
 
   if [[ "${is_govcloud_region}" == "true" ]]; then
     log "INFO" "Setting azure-cli context to AzureUSGovernment environment."
