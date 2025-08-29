@@ -80,3 +80,11 @@ In the `compute.tf` there is a commented out local file resource that will rende
 ## Boundary Session Recording
 
 Boundary Enterprise and HCP Boundary have support for Session Recording. One of the requirements however is native integration to the object storage, which currently is AWS and Minio, or support native S3 APIs. Boundary Does not have native integration to Azure Blob Storage and Azure Blob storage does not support native S3 APIs. Once either of these has been implemented we will add Boundary Session Recording support to this Module.
+
+## Custom startup script
+
+While this is not recommended, this module supports the ability to use your own custom startup script to install. `var.custom_startup_script_template` # defaults to /templates/custom_data.sh.tpl
+
+- The script must exist in a folder named ./templates within your current working directory that you are running Terraform from.
+- The script must contain all of the variables (denoted by ${example-variable}) in the module-level startup script
+- *Use at your own peril*
