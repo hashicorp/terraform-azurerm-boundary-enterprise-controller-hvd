@@ -271,28 +271,15 @@ variable "vm_custom_image_rg_name" {
   default     = null
 }
 
-variable "vm_image_publisher" {
+variable "vm_os_image" {
+  description = "The OS image to use for the VM. Options are: redhat8, redhat9, ubuntu2204, ubuntu2404."
   type        = string
-  description = "Publisher of the VM image."
-  default     = "Canonical"
-}
+  default     = "ubuntu2404"
 
-variable "vm_image_offer" {
-  type        = string
-  description = "Offer of the VM image."
-  default     = "0001-com-ubuntu-server-jammy"
-}
-
-variable "vm_image_sku" {
-  type        = string
-  description = "SKU of the VM image."
-  default     = "22_04-lts-gen2"
-}
-
-variable "vm_image_version" {
-  type        = string
-  description = "Version of the VM image."
-  default     = "latest"
+  validation {
+    condition     = contains(["redhat8", "redhat9", "ubuntu2204", "ubuntu2404"], var.vm_os_image)
+    error_message = "Value must be one of 'redhat8', 'redhat9', 'ubuntu2204', or 'ubuntu2404'."
+  }
 }
 
 variable "vm_disk_encryption_set_name" {
@@ -321,6 +308,17 @@ variable "vmss_availability_zones" {
   validation {
     condition     = alltrue([for az in var.vmss_availability_zones : contains(["1", "2", "3"], az)])
     error_message = "Availability zone must be one of, or a combination of '1', '2', '3'."
+  }
+}
+
+variable "custom_startup_script_template" {
+  type        = string
+  description = "Name of custom startup script template file. File must exist within a directory named `./templates` within your current working directory."
+  default     = null
+
+  validation {
+    condition     = var.custom_startup_script_template != null ? fileexists("${path.cwd}/templates/${var.custom_startup_script_template}") : true
+    error_message = "File not found. Ensure the file exists within a directory named `./templates` within your current working directory."
   }
 }
 

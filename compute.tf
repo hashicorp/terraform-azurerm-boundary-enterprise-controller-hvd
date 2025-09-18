@@ -5,6 +5,7 @@
 # Custom Data (cloud-init) arguments
 #------------------------------------------------------------------------------
 locals {
+  custom_startup_script_template = var.custom_startup_script_template != null ? "${path.cwd}/templates/${var.custom_startup_script_template}" : "${path.module}/templates/boundary_custom_data.sh.tpl"
   custom_data_args = {
     # used to set azure-cli context to AzureUSGovernment
     is_govcloud_region = var.is_govcloud_region
@@ -24,7 +25,6 @@ locals {
     boundary_dir_bin     = "/usr/bin",
     boundary_dir_config  = "/etc/boundary.d",
     boundary_dir_home    = "/opt/boundary",
-    boundary_install_url = format("https://releases.hashicorp.com/boundary/%s/boundary_%s_linux_amd64.zip", var.boundary_version, var.boundary_version),
     boundary_tls_disable = var.boundary_tls_disable
 
     # Database settings
@@ -45,15 +45,7 @@ locals {
   }
 }
 
-#------------------------------------------------------------------------------
-# Custom VM image lookup
-#------------------------------------------------------------------------------
-data "azurerm_image" "custom" {
-  count = var.vm_custom_image_name == null ? 0 : 1
 
-  name                = var.vm_custom_image_name
-  resource_group_name = var.vm_custom_image_rg_name
-}
 
 #------------------------------------------------------------------------------
 # Virtual Machine Scale Set (VMSS)
@@ -70,7 +62,7 @@ resource "azurerm_linux_virtual_machine_scale_set" "boundary" {
   zone_balance        = true
   zones               = var.vmss_availability_zones
   health_probe_id     = azurerm_lb_probe.boundary_api.id
-  custom_data         = base64encode(templatefile("${path.module}/templates/boundary_custom_data.sh.tpl", local.custom_data_args))
+  custom_data         = base64encode(templatefile("${local.custom_startup_script_template}", local.custom_data_args))
 
   scale_in {
     rule = "OldestVM"
@@ -90,16 +82,16 @@ resource "azurerm_linux_virtual_machine_scale_set" "boundary" {
     }
   }
 
-  source_image_id = var.vm_custom_image_name == null ? null : data.azurerm_image.custom[0].id
+  source_image_id = var.vm_custom_image_name != null ? data.azurerm_image.custom[0].id : null
 
   dynamic "source_image_reference" {
     for_each = var.vm_custom_image_name == null ? [true] : []
 
     content {
-      publisher = var.vm_image_publisher
-      offer     = var.vm_image_offer
-      sku       = var.vm_image_sku
-      version   = var.vm_image_version
+      publisher = local.vm_image_publisher
+      offer     = local.vm_image_offer
+      sku       = local.vm_image_sku
+      version   = data.azurerm_platform_image.latest_os_image.version
     }
   }
 
