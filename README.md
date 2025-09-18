@@ -4,9 +4,9 @@ Terraform module aligned with HashiCorp Validated Designs (HVD) to deploy Bounda
 
 <!-- ## Boundary Architecture
 
-This diagram shows a Boundary deployment with one controller and two sets of Boundary Workers, one for ingress and another for egress. Please review [Boundary deployment customizations doc](./docs/deployment-customizations.md) to understand different deployment settings for the Boundary deployment. diagram wip
+This diagram shows a Boundary deployment with one controller and two sets of Boundary Workers, one for ingress and another for egress. Please review [Boundary deployment customizations doc](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/0.2.0/docs/deployment-customizations.md) to understand different deployment settings for the Boundary deployment. diagram wip
 
-![Boundary on Azure](./docs/images/boundary-diagram.png) -->
+![Boundary on Azure](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/0.2.0/docs/images/boundary-diagram.png) -->
 
 ## Prerequisites
 
@@ -41,7 +41,7 @@ This diagram shows a Boundary deployment with one controller and two sets of Bou
 - __Boundary TLS private key__ - file in PEM format, base64-encoded into a string, and stored as a plaintext secret.
 - __Boundary custom CA bundle__ - file in PEM format, base64-encoded into a string, and stored as a plaintext secret.
 
-  >📝 Note: see the [Boundary cert rotation docs](./docs/boundary-cert-rotation.md) for instructions on how to base64-encode the certificates with proper formatting.
+  >📝 Note: see the [Boundary cert rotation docs](https://github.com/hashicorp/terraform-azurerm-boundary-enterprise-controller-hvd/blob/0.2.0/docs/boundary-cert-rotation.md) for instructions on how to base64-encode the certificates with proper formatting.
 
 #### Keys
 
