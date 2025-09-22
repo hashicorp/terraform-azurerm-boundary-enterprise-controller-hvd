@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 locals {
   os_image_map = {
     redhat8    = { publisher = "RedHat", offer = "RHEL" }
