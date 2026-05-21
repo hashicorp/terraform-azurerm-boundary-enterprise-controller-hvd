@@ -18,6 +18,7 @@ BOUNDARY_VERSION="${boundary_version}"
 VERSION=$BOUNDARY_VERSION
 REQUIRED_PACKAGES="jq unzip"
 ADDITIONAL_PACKAGES="${additional_package_names}"
+BOUNDARY_BOOTSTRAP_AZURE_CLIENT_ID="${boundary_bootstrap_azure_client_id}"
 
 function log {
   local level="$1"
@@ -412,8 +413,8 @@ function main {
     az cloud set --name AzureUSGovernment
   fi
 
-  log "INFO" "Running 'az login'."
-  az login --identity
+  log "INFO" "Running 'az login --identity --client-id' for client ID '$BOUNDARY_BOOTSTRAP_AZURE_CLIENT_ID'."
+  az login --identity --client-id "$BOUNDARY_BOOTSTRAP_AZURE_CLIENT_ID" --allow-no-subscriptions
 
   log "INFO" "Retrieving Boundary license file from Key Vault."
   retrieve_license_from_kv
