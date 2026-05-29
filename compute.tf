@@ -42,6 +42,8 @@ locals {
     root_key_name             = var.root_key_name != null ? data.azurerm_key_vault_key.root[0].name : azurerm_key_vault_key.root[0].name
     recovery_key_name         = var.recovery_key_name != null ? data.azurerm_key_vault_key.recovery[0].name : azurerm_key_vault_key.recovery[0].name
     worker_key_name           = var.worker_key_name != null ? data.azurerm_key_vault_key.worker[0].name : azurerm_key_vault_key.worker[0].name
+
+    boundary_bootstrap_azure_client_id = azurerm_user_assigned_identity.boundary.client_id
   }
 }
 
