@@ -45,3 +45,4 @@ vm_enable_boot_diagnostics = true
 
 # --- Key Vault --- #
 key_vault_cidr_allow_list = <["<1.2.3.4/32>"]
+use_key_vault_rbac        = false
