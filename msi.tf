@@ -22,6 +22,8 @@ resource "azurerm_role_assignment" "boundary_kv_reader" {
 }
 
 resource "azurerm_key_vault_access_policy" "boundary_kv_reader" {
+  count = var.use_key_vault_rbac ? 0 : 1
+
   key_vault_id = data.azurerm_key_vault.prereqs.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
   object_id    = azurerm_user_assigned_identity.boundary.principal_id
@@ -29,6 +31,14 @@ resource "azurerm_key_vault_access_policy" "boundary_kv_reader" {
   secret_permissions = [
     "Get",
   ]
+}
+
+resource "azurerm_role_assignment" "boundary_kv_secrets_user" {
+  count = var.use_key_vault_rbac ? 1 : 0
+
+  scope                = data.azurerm_key_vault.prereqs.id
+  role_definition_name = "Key Vault Secrets User"
+  principal_id         = azurerm_user_assigned_identity.boundary.principal_id
 }
 
 #------------------------------------------------------------------------------
@@ -43,7 +53,7 @@ resource "azurerm_user_assigned_identity" "postgres" {
 }
 
 resource "azurerm_key_vault_access_policy" "postgres_cmk" {
-  count = var.postgres_cmk_key_vault_key_id != null && var.postgres_cmk_key_vault_id != null ? 1 : 0
+  count = !var.use_key_vault_rbac && var.postgres_cmk_key_vault_key_id != null && var.postgres_cmk_key_vault_id != null ? 1 : 0
 
   key_vault_id = var.postgres_cmk_key_vault_id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -54,6 +64,14 @@ resource "azurerm_key_vault_access_policy" "postgres_cmk" {
     "WrapKey",
     "UnwrapKey",
   ]
+}
+
+resource "azurerm_role_assignment" "postgres_cmk_crypto_service_encryption_user" {
+  count = var.use_key_vault_rbac && var.postgres_cmk_key_vault_key_id != null && var.postgres_cmk_key_vault_id != null ? 1 : 0
+
+  scope                = var.postgres_cmk_key_vault_id
+  role_definition_name = "Key Vault Crypto Service Encryption User"
+  principal_id         = azurerm_user_assigned_identity.postgres[0].principal_id
 }
 
 #------------------------------------------------------------------------------
@@ -73,4 +91,3 @@ resource "azurerm_role_assignment" "boundary_vmss_disk_encryption_set_reader" {
   role_definition_name = "Reader"
   principal_id         = azurerm_user_assigned_identity.boundary.principal_id
 }
-

@@ -462,6 +462,12 @@ variable "key_vault_cidr_allow_list" {
   default     = []
 }
 
+variable "use_key_vault_rbac" {
+  type        = bool
+  description = "Whether to use Azure RBAC instead of legacy access policies for Key Vault data-plane access."
+  default     = false
+}
+
 variable "create_boundary_controller_key_vault" {
   type        = bool
   description = "Boolean to create a Key Vault for Boundary Controller."

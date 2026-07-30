@@ -61,4 +61,5 @@ module "boundary_controller" {
 
   #Key Vault
   key_vault_cidr_allow_list = var.key_vault_cidr_allow_list
+  use_key_vault_rbac        = var.use_key_vault_rbac
 }
